@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cuestionario Cultura Mater</title>
+    <!-- Tailwind CSS CDN for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #e0f2fe; /* Light blue background */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 1.5rem; /* More rounded corners */
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            max-width: 90%;
+            width: 600px;
+            padding: 2.5rem;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        .question-counter {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #4a5568; /* Gray text */
+            margin-bottom: 1rem;
+            text-align: right; /* Align to the right */
+        }
+        .question-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1a202c; /* Dark text */
+            margin-bottom: 1.5rem;
+        }
+        .options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .option-button {
+            background-color: #4299e1; /* Blue */
+            color: #ffffff;
+            padding: 1rem 1.5rem;
+            border-radius: 0.75rem; /* Rounded */
+            font-size: 1.125rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            border: none;
+            text-align: left;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .option-button:hover {
+            background-color: #3182ce; /* Darker blue on hover */
+            transform: translateY(-2px);
+        }
+        .option-button.selected {
+            background-color: #2b6cb0; /* Even darker when selected */
+            border: 2px solid #a0aec0;
+        }
+        .option-button.correct {
+            background-color: #48bb78; /* Green for correct */
+        }
+        .option-button.incorrect {
+            background-color: #ef4444; /* Red for incorrect */
+        }
+        .feedback-message {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-top: 1rem;
+        }
+        .navigation-buttons {
+            display: flex;
+            justify-content: flex-end; /* Align to the right, as submit is removed */
+            margin-top: 2rem;
+        }
+        .nav-button {
+            background-color: #6366f1; /* Indigo */
+            color: #ffffff;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            font-size: 1.125rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            border: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .nav-button:hover {
+            background-color: #4f46e5; /* Darker indigo on hover */
+            transform: translateY(-2px);
+        }
+        .nav-button:disabled {
+            background-color: #cbd5e0; /* Gray when disabled */
+            cursor: not-allowed;
+        }
+        .results-container {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1a202c;
+        }
+        .restart-button {
+            background-color: #f6ad55; /* Orange */
+            color: #ffffff;
+            padding: 1rem 2rem;
+            border-radius: 0.75rem;
+            font-size: 1.25rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            border: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-top: 1.5rem;
+        }
+        .restart-button:hover {
+            background-color: #ed8936; /* Darker orange on hover */
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-3xl font-bold text-gray-800">Cuestionario Cultura Mater</h1>
+
+        <!-- Quiz Section -->
+        <div id="quiz-section">
+            <p id="question-counter" class="question-counter"></p> <!-- New element for question counter -->
+            <p class="question-text" id="question-text"></p>
+            <div class="options-container" id="options-container">
+                <!-- Options will be loaded here by JavaScript -->
+            </div>
+            <p id="feedback-message" class="feedback-message"></p>
+            <div class="navigation-buttons">
+                <button id="next-button" class="nav-button" disabled>Siguiente Pregunta</button>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div id="results-section" class="hidden">
+            <p class="results-container">¡Cuestionario Completado!</p>
+            <p class="results-container">Tu puntuación final es: <span id="final-score"></span>/<span id="total-questions"></span></p>
+            <button id="restart-button" class="restart-button">Reiniciar Cuestionario</button>
+        </div>
+    </div>
+
+    <script>
+        // Array of quiz questions
+        const questions = [
+            {
+                question: "¿Cuál es el concepto central de 'Líder Mater'?",
+                type: "multiple_choice",
+                options: [
+                    "Hacerse cargo de que las cosas sucedan.",
+                    "Delegar todas las responsabilidades.",
+                    "Solo dar órdenes al equipo.",
+                    "Evitar los problemas a toda costa."
+                ],
+                correctAnswer: "Hacerse cargo de que las cosas sucedan."
+            },
+            {
+                question: "Verdadero o Falso: El liderazgo en el Grupo MATER busca impulsar la colaboración y la construcción conjunta a través del sentido de 'NOSOTROS'.",
+                type: "true_false",
+                options: ["Verdadero", "Falso"],
+                correctAnswer: "Verdadero"
+            },
+            {
+                question: "¿Cuál de los siguientes NO es un valor a cuidar en el Liderazgo Mater?",
+                type: "multiple_choice",
+                options: [
+                    "Individualismo",
+                    "Compromiso",
+                    "Innovación",
+                    "Confianza"
+                ],
+                correctAnswer: "Individualismo"
+            },
+            {
+                question: "¿Qué atributo esencial del estilo de liderazgo Mater implica la capacidad de integrar múltiples perspectivas y detectar oportunidades?",
+                type: "multiple_choice",
+                options: [
+                    "Visión estratégica",
+                    "Persistencia",
+                    "Tolerancia a la incertidumbre",
+                    "Coordinación"
+                ],
+                correctAnswer: "Visión estratégica"
+            },
+            {
+                question: "Verdadero o Falso: El perfil de liderazgo Mater describe los roles que un integrante asume para que el equipo funcione bien, y se complementa con el estilo de liderazgo.",
+                type: "true_false",
+                options: ["Verdadero", "Falso"],
+                correctAnswer: "Verdadero"
+            },
+            {
+                question: "¿Qué rol de liderazgo Mater se encarga de organizar y potenciar el talento, delegando inteligentemente?",
+                type: "multiple_choice",
+                options: [
+                    "Rol Coordinador",
+                    "Rol Impulsor",
+                    "Rol Monitor y Evaluador",
+                    "Rol Decisor"
+                ],
+                correctAnswer: "Rol Coordinador"
+            },
+            {
+                question: "¿Qué significa el comportamiento clave 'Incomoda sin limitar' en el Liderazgo Mater?",
+                type: "multiple_choice",
+                options: [
+                    "Desafiar suposiciones y estimular el pensamiento crítico, sin invalidar.",
+                    "Silenciar a los demás para imponer una idea.",
+                    "Establecer límites estrictos a la creatividad.",
+                    "Evitar cualquier tipo de conflicto o cuestionamiento."
+                ],
+                correctAnswer: "Desafiar suposiciones y estimular el pensamiento crítico, sin invalidar."
+            },
+            {
+                question: "Verdadero o Falso: Un comportamiento clave del Liderazgo Mater es dejar que el equipo se quede en la reflexión excesiva.",
+                type: "true_false",
+                options: ["Verdadero", "Falso"],
+                correctAnswer: "Falso"
+            },
+            {
+                question: "¿Qué competencia a desarrollar en el Liderazgo Mater se refiere a la capacidad de integrar información y anticiparse a problemas?",
+                type: "multiple_choice",
+                options: [
+                    "Pensamiento estratégico",
+                    "Movilización y dinamismo",
+                    "Autoconfianza y expresión asertiva",
+                    "Gestión del talento y delegación efectiva"
+                ],
+                correctAnswer: "Pensamiento estratégico"
+            },
+            {
+                question: "Verdadero o Falso: Una expectativa sobre el desempeño diario del Líder Mater es postergar decisiones difíciles para evitar conflictos.",
+                type: "true_false",
+                options: ["Verdadero", "Falso"],
+                correctAnswer: "Falso"
+            },
+            {
+                question: "¿Qué fomenta el Líder Mater en relación al diálogo y la construcción colectiva?",
+                type: "multiple_choice",
+                options: [
+                    "Escuchar a los demás y fortalecer las decisiones a través de discusiones productivas.",
+                    "Imponer sus ideas para agilizar el proceso.",
+                    "Evitar los desacuerdos para mantener la armonía.",
+                    "Solo escuchar las opiniones de los que están de acuerdo."
+                ],
+                correctAnswer: "Escuchar a los demás y fortalecer las decisiones a través de discusiones productivas."
+            },
+            {
+                question: "¿Qué representa la 'V' en el método VIDA del liderazgo?",
+                type: "multiple_choice",
+                options: [
+                    "Visualizar: identificar, entender al equipo y conectarlos con el propósito.",
+                    "Valorar: reconocer el trabajo de los demás.",
+                    "Verificar: revisar el progreso del equipo.",
+                    "Voluntad: tener ganas de liderar."
+                ],
+                correctAnswer: "Visualizar: identificar, entender al equipo y conectarlos con el propósito."
+            },
+            {
+                question: "Verdadero o Falso: El método VIDA invita a vivir la cultura a través de prácticas que fortalecen el sentido del 'NOSOTROS'.",
+                type: "true_false",
+                options: ["Verdadero", "Falso"],
+                correctAnswer: "Verdadero"
+            },
+            {
+                question: "¿Cuál es el objetivo de la práctica de liderazgo 'NEA - PEA'?",
+                type: "multiple_choice",
+                options: [
+                    "Fortalecer la conexión entre integrantes reconociendo aportes positivos y ruidos.",
+                    "Identificar solo los puntos débiles de cada integrante.",
+                    "Generar un espacio para quejarse libremente.",
+                    "Evaluar el desempeño individual de manera formal."
+                ],
+                correctAnswer: "Fortalecer la conexión entre integrantes reconociendo aportes positivos y ruidos."
+            },
+            {
+                question: "Verdadero o Falso: La práctica 'NEA - PEA' se realiza de forma individual para reflexionar sobre las interacciones.",
+                type: "true_false",
+                options: ["Verdadero", "Falso"],
+                correctAnswer: "Falso"
+            },
+            {
+                question: "¿Qué busca la práctica de liderazgo 'CATARSIS'?",
+                type: "multiple_choice",
+                options: [
+                    "Generar espacio de confianza para escuchar e identificar talentos en el otro.",
+                    "Permitir quejarse sin ninguna retroalimentación.",
+                    "Solo desahogarse de situaciones estresantes.",
+                    "Evaluar la capacidad de escucha del líder."
+                ],
+                correctAnswer: "Generar espacio de confianza para escuchar e identificar talentos en el otro."
+            },
+            {
+                question: "Verdadero o Falso: En la práctica 'CATARSIS', se busca reconocer las debilidades del equipo para que sea efectivo.",
+                type: "true_false",
+                options: ["Verdadero", "Falso"],
+                correctAnswer: "Falso"
+            },
+            {
+                question: "¿Cuál es el objetivo de la práctica 'CONECTAR CON EL PROPÓSITO'?",
+                type: "multiple_choice",
+                options: [
+                    "Identificar el propósito personal y alinearlo con el propósito organizacional.",
+                    "Definir el propósito del Grupo Mater para todos.",
+                    "Establecer metas individuales sin considerar el equipo.",
+                    "Ignorar los propósitos personales."
+                ],
+                correctAnswer: "Identificar el propósito personal y alinearlo con el propósito organizacional."
+            },
+            {
+                question: "Verdadero o Falso: La práctica 'UTILIZAR LO MEJOR DE NOSOTROS PARA LOGRAR EL OBJETIVO' busca fortalecer solo el respeto mutuo, no los vínculos.",
+                type: "true_false",
+                options: ["Verdadero", "Falso"],
+                correctAnswer: "Falso"
+            },
+            {
+                question: "¿Qué se pregunta en la práctica 'UTILIZAR LO MEJOR DE NOSOTROS PARA LOGRAR EL OBJETIVO' para identificar obstáculos?",
+                type: "multiple_choice",
+                options: [
+                    "\"Cuándo obtienes lo peor de mi...\"",
+                    "\"En qué puedes contar conmigo...\"",
+                    "\"En qué te necesito a ti...\"",
+                    "\"Nuestro objetivo de equipo es...\""
+                ],
+                correctAnswer: "\"Cuándo obtienes lo peor de mi...\""
+            },
+            {
+                question: "¿Cuál es el objetivo de la práctica de liderazgo 'MAPA DE MÁXIMAS'?",
+                type: "multiple_choice",
+                options: [
+                    "Guiar comportamientos para la excelencia en la ejecución del propósito.",
+                    "Crear una lista de tareas pendientes para el equipo.",
+                    "Evaluar el desempeño individual de los líderes.",
+                    "Solo definir los valores fundamentales de la organización."
+                ],
+                correctAnswer: "Guiar comportamientos para la excelencia en la ejecución del propósito."
+            },
+            {
+                question: "Verdadero o Falso: Las máximas son frases largas y complejas que describen la visión de la organización.",
+                type: "true_false",
+                options: ["Verdadero", "Falso"],
+                correctAnswer: "Falso"
+            },
+            {
+                question: "¿Qué pilar de Danny Meyer se refiere a que 'no basta con hacer bien el trabajo, también importa cómo haces sentir a los demás'?",
+                type: "multiple_choice",
+                options: [
+                    "Excelencia técnica y emocional",
+                    "Hospitalidad ilustrada",
+                    "Empatía y conexión",
+                    "Cultura de equipo"
+                ],
+                correctAnswer: "Excelencia técnica y emocional"
+            },
+            {
+                question: "Verdadero o Falso: Una vez definidas, las máximas deben guardarse en un archivo personal y no ser compartidas con todo el equipo.",
+                type: "true_false",
+                options: ["Verdadero", "Falso"],
+                correctAnswer: "Falso"
+            },
+            {
+                question: "¿Cuál es el objetivo de la práctica de liderazgo 'MODELO DE LAS 4D'?",
+                type: "multiple_choice",
+                options: [
+                    "Alinear comportamientos con los valores Mater y elevar la responsabilidad.",
+                    "Identificar errores individuales en el equipo.",
+                    "Delegar todas las responsabilidades a un solo líder.",
+                    "Solo definir estándares sin necesidad de aplicarlos."
+                ],
+                correctAnswer: "Alinear comportamientos con los valores Mater y elevar la responsabilidad."
+            },
+            {
+                question: "¿Qué significa 'Demostrar el estándar' en el Modelo de las 4D?",
+                type: "multiple_choice",
+                options: [
+                    "Los líderes deben vivir el estándar con coherencia, siendo ejemplo.",
+                    "Solo definir el estándar para que otros lo sigan.",
+                    "Demandar el estándar a los demás sin aplicarlo personalmente.",
+                    "Delegar la responsabilidad de mantener el estándar."
+                ],
+                correctAnswer: "Los líderes deben vivir el estándar con coherencia, siendo ejemplo."
+            },
+            {
+                question: "Verdadero o Falso: 'Delegar el estándar' implica que los líderes son los únicos responsables de mantenerlo en todo momento.",
+                type: "true_false",
+                options: ["Verdadero", "Falso"],
+                correctAnswer: "Falso"
+            },
+            {
+                question: "¿Cuál es el objetivo de la práctica de liderazgo 'ACUERDOS DE DISPOSICIÓN ESENCIAL-ADE'?",
+                type: "multiple_choice",
+                options: [
+                    "Establecer acuerdos claros y completos para una coordinación impecable.",
+                    "Generar conversaciones informales sin seguimiento.",
+                    "Identificar problemas sin buscar soluciones.",
+                    "Solo definir responsabilidades individuales."
+                ],
+                correctAnswer: "Establecer acuerdos claros y completos para una coordinación impecable."
+            },
+            {
+                question: "En el ADE, ¿qué se define en la sección 'Rendición de cuentas'?",
+                type: "multiple_choice",
+                options: [
+                    "Quién es el responsable del cumplimiento, a quién debe entregar y en qué condiciones.",
+                    "Solo el resultado deseado del acuerdo.",
+                    "Los recursos necesarios para cumplir el acuerdo.",
+                    "Las directrices de calidad a seguir."
+                ],
+                correctAnswer: "Quién es el responsable del cumplimiento, a quién debe entregar y en qué condiciones."
+            },
+            {
+                question: "Verdadero o Falso: En el ADE, las 'Consecuencias' solo se refieren a los castigos por incumplimiento.",
+                type: "true_false",
+                options: ["Verdadero", "Falso"],
+                correctAnswer: "Falso"
+            },
+            {
+                question: "¿Cuál es el objetivo de la práctica de liderazgo 'CREA'?",
+                type: "multiple_choice",
+                options: [
+                    "Desarrollar algún comportamiento o competencia, y lograr compromisos con un seguimiento para crear hábito.",
+                    "Solo estructurar conversaciones personales.",
+                    "Resolver conflictos sin un plan de acción concreto.",
+                    "Presentar el contexto de una situación sin buscar soluciones."
+                ],
+                correctAnswer: "Desarrollar algún comportamiento o competencia, y lograr compromisos con un seguimiento para crear hábito."
+            },
+            {
+                question: "Verdadero o Falso: En la estructura de la conversación CREA, en la sección 'Explorar estrategias', el líder debe imponer sus ideas para agilizar el proceso.",
+                type: "true_false",
+                options: ["Verdadero", "Falso"],
+                correctAnswer: "Falso"
+            },
+            {
+                question: "¿Qué busca la sección 'Acción a emprender' en la práctica CREA?",
+                type: "multiple_choice",
+                options: [
+                    "Acordar pasos concretos, responsables y plazos.",
+                    "Solo identificar los problemas sin buscar soluciones.",
+                    "Dejar la responsabilidad completamente al integrante.",
+                    "Terminar la conversación sin compromisos."
+                ],
+                correctAnswer: "Acordar pasos concretos, responsables y plazos."
+            },
+            {
+                question: "¿Qué significa la 'A' de ADKAR en la práctica de liderazgo 'ADKAR'?",
+                type: "multiple_choice",
+                options: [
+                    "Awareness (Conciencia): El integrante no entiende por qué se hace el cambio.",
+                    "Ability (Habilidad): El integrante tiene el conocimiento, pero no aplica.",
+                    "Action (Acción): Poner en práctica el cambio.",
+                    "Acompañamiento: Brindar apoyo al equipo."
+                ],
+                correctAnswer: "Awareness (Conciencia): El integrante no entiende por qué se hace el cambio."
+            },
+            {
+                question: "Verdadero o Falso: El modelo ADKAR se utiliza para fortalecer la capacidad de los líderes en la gestión de cambios individuales y colectivos.",
+                type: "true_false",
+                options: ["Verdadero", "Falso"],
+                correctAnswer: "Verdadero"
+            },
+            {
+                question: "¿Qué significa la 'K' de ADKAR en la práctica de liderazgo 'ADKAR'?",
+                type: "multiple_choice",
+                options: [
+                    "Knowledge (Conocimiento): El integrante quiere hacerlo, pero no sabe cómo.",
+                    "Keenness (Entusiasmo): El integrante está muy motivado.",
+                    "Kindness (Amabilidad): El líder es amable al transmitir el cambio.",
+                    "Key (Clave): El punto clave del cambio."
+                ],
+                correctAnswer: "Knowledge (Conocimiento): El integrante quiere hacerlo, pero no sabe cómo."
+            },
+            {
+                question: "¿Cuál es el objetivo de la práctica de liderazgo 'VENTANA DE JOHARI - TEST RELACIONES INTERPERSONALES'?",
+                type: "multiple_choice",
+                options: [
+                    "Fomentar el autoconocimiento y la confianza interpersonal.",
+                    "Identificar solo las debilidades del equipo.",
+                    "Evaluar la personalidad de los integrantes.",
+                    "Resolver conflictos de forma individual."
+                ],
+                correctAnswer: "Fomentar el autoconocimiento y la confianza interpersonal."
+            },
+            {
+                question: "Verdadero o Falso: En la Ventana de Johari, el 'Área Pública' representa lo que tú conoces de ti y lo que los demás desconocen de ti.",
+                type: "true_false",
+                options: ["Verdadero", "Falso"],
+                correctAnswer: "Falso"
+            },
+            {
+                question: "En la Ventana de Johari, ¿qué representa el 'Área Ciega'?",
+                type: "multiple_choice",
+                options: [
+                    "Lo que desconoces de ti, pero los demás conocen de ti.",
+                    "Lo que conoces de ti y los demás desconocen.",
+                    "Lo que conoces de ti y los demás conocen.",
+                    "Lo que desconoces de ti y los demás desconocen."
+                ],
+                correctAnswer: "Lo que desconoces de ti, pero los demás conocen de ti."
+            },
+            {
+                question: "¿Cuál es el objetivo de la práctica 'PLUS-DELTA-UNO' (La Silla Caliente)?",
+                type: "multiple_choice",
+                options: [
+                    "Fomentar el autoconocimiento y la confianza interpersonal a través de retroalimentación.",
+                    "Resolver conflictos individuales en el equipo.",
+                    "Competir entre los integrantes para ver quién es el mejor.",
+                    "Solo identificar los errores sin ofrecer soluciones."
+                ],
+                correctAnswer: "Fomentar el autoconocimiento y la confianza interpersonal a través de retroalimentación."
+            },
+            {
+                question: "Verdadero o Falso: En la práctica 'PLUS-DELTA-UNO', 'PLUS' se refiere a lo que no funciona del otro y se le pide que lo cambie.",
+                type: "true_false",
+                options: ["Verdadero", "Falso"],
+                correctAnswer: "Falso"
+            },
+            {
+                question: "En la práctica 'PLUS-DELTA-UNO', ¿qué significa 'DELTA'?",
+                type: "multiple_choice",
+                options: [
+                    "Lo que funcionaría mejor en lugar de lo que se está haciendo, con sugerencias específicas.",
+                    "Un comportamiento positivo que se debe mantener.",
+                    "La fortaleza principal de la persona.",
+                    "Un agradecimiento."
+                ],
+                correctAnswer: "Lo que funcionaría mejor en lugar de lo que se está haciendo, con sugerencias específicas."
+            },
+            {
+                question: "Después de recibir el PLUS y DELTA, ¿a qué se compromete el integrante en la práctica 'PLUS-DELTA-UNO'?",
+                type: "multiple_choice",
+                options: [
+                    "Al 'UNO': ¿A qué te quieres comprometer para que trabajemos mejor juntos?",
+                    "A la 'ACCIÓN': ¿Qué vas a hacer ahora?",
+                    "Al 'NUEVO': ¿Qué es lo nuevo que vas a implementar?",
+                    "Al 'RESULTADO': ¿Qué resultado esperas?"
+                ],
+                correctAnswer: "Al 'UNO': ¿A qué te quieres comprometer para que trabajemos mejor juntos?"
+            },
+            {
+                question: "¿Cuál es el objetivo de la práctica de liderazgo 'FEEDBACK O RETROALIMENTACIÓN DE AGRADECIMIENTO'?",
+                type: "multiple_choice",
+                options: [
+                    "Reconocer y reforzar comportamientos, actitudes o aportes que generen valor en el equipo.",
+                    "Identificar solo los errores del equipo.",
+                    "Generar un espacio de quejas.",
+                    "Evaluar el desempeño individual de forma crítica."
+                ],
+                correctAnswer: "Reconocer y reforzar comportamientos, actitudes o aportes que generen valor en el equipo."
+            },
+            {
+                question: "Verdadero o Falso: El Feedback de agradecimiento se puede dar solo en privado.",
+                type: "true_false",
+                options: ["Verdadero", "Falso"],
+                correctAnswer: "Falso"
+            },
+            {
+                question: "Según el documento, ¿qué se debe hacer al recibir feedback de agradecimiento?",
+                type: "multiple_choice",
+                options: [
+                    "Escuchar con atención plena y con humildad.",
+                    "Ignorar el feedback si no se está de acuerdo.",
+                    "Debatir lo que se dice para justificar las acciones.",
+                    "Pedir explicaciones detalladas de inmediato."
+                ],
+                correctAnswer: "Escuchar con atención plena y con humildad."
+            },
+            {
+                question: "¿Cuál es el objetivo de la práctica de liderazgo 'FEEDBACK CORRECTIVO'?",
+                type: "multiple_choice",
+                options: [
+                    "Identificar oportunidades de mejora desde la observación respetuosa y clara para ajustar comportamientos.",
+                    "Solo señalar errores sin ofrecer soluciones.",
+                    "Impulsar la competencia entre los integrantes.",
+                    "Generar un ambiente de crítica constante."
+                ],
+                correctAnswer: "Identificar oportunidades de mejora desde la observación respetuosa y clara para ajustar comportamientos."
+            },
+            {
+                question: "Verdadero o Falso: En el Feedback correctivo, no es necesario describir el contexto de la situación, solo el comportamiento observado.",
+                type: "true_false",
+                options: ["Verdadero", "Falso"],
+                correctAnswer: "Falso"
+            },
+            {
+                question: "En el Feedback correctivo, ¿qué se busca al 'Entender motivaciones del otro'?",
+                type: "multiple_choice",
+                options: [
+                    "Consultar sobre la situación y qué lo llevó a moverse de esa manera.",
+                    "Imponer una solución sin escuchar.",
+                    "Ignorar la perspectiva del otro.",
+                    "Solo escuchar una justificación sin cuestionar."
+                ],
+                correctAnswer: "Consultar sobre la situación y qué lo llevó a moverse de esa manera."
+            },
+            {
+                question: "Según el documento, ¿cuál es la frase que invita al lector a unirse a la cultura Mater al finalizar la sección principal?",
+                type: "multiple_choice",
+                options: [
+                    "\"¡Asegúrate de conectar con nuestra Cultura MATER, porque es el camino que nos permite crecer y construir en equipo!\"",
+                    "\"El éxito es individual, no de equipo.\"",
+                    "\"La cultura es opcional, cada uno decide cómo vivirla.\"",
+                    "\"No hay camino definido para el crecimiento.\""
+                ],
+                correctAnswer: "\"¡Asegúrate de conectar con nuestra Cultura MATS, porque es el camino que nos permite crecer y construir en equipo!\""
+            },
+            {
+                question: "Verdadero o Falso: La 'Hospitalidad atlética' en el Grupo Mater se refiere a servir con actitud, detalle y pasión, como si se estuviera compitiendo por ofrecer la mejor experiencia.",
+                type: "true_false",
+                options: ["Verdadero", "Falso"],
+                correctAnswer: "Verdadero"
+            },
+            {
+                question: "¿Qué se busca al 'Crear experiencia memorable' en la atención al cliente?",
+                type: "multiple_choice",
+                options: [
+                    "Personalizar cada interacción con hospitalidad atlética para que el cliente se sienta valorado y comprendido.",
+                    "Ofrecer solo soluciones técnicas sin considerar la emoción del cliente.",
+                    "Terminar la interacción lo más rápido posible.",
+                    "Evitar el contacto visual con el cliente."
+                ],
+                correctAnswer: "Personalizar cada interacción con hospitalidad atlética para que el cliente se sienta valorado y comprendido."
+            },
+            {
+                question: "Verdadero o Falso: 'Cierre con broche de oro' en la atención al cliente significa despedirse rápidamente para pasar al siguiente cliente.",
+                type: "true_false",
+                options: ["Verdadero", "Falso"],
+                correctAnswer: "Falso"
+            },
+            {
+                question: "¿Cuál es el propósito de 'Escuchar, dialogar y solucionar' en la atención al cliente?",
+                type: "multiple_choice",
+                options: [
+                    "Convertir problemas en oportunidades para fortalecer la relación y generar aprendizajes.",
+                    "Evitar los problemas a toda costa.",
+                    "Solo escuchar para identificar quién tiene la culpa.",
+                    "Ignorar las quejas del cliente."
+                ],
+                correctAnswer: "Convertir problemas en oportunidades para fortalecer la relación y generar aprendizajes."
+            },
+            {
+                question: "Verdadero o Falso: 'Asesorar con propósito y certeza' implica brindar soluciones útiles, precisas y alineadas con los intereses reales del cliente.",
+                type: "true_false",
+                options: ["Verdadero", "Falso"],
+                correctAnswer: "Verdadero"
+            },
+            {
+                question: "¿Qué se busca al 'Conocer con empatía al cliente'?",
+                type: "multiple_choice",
+                options: [
+                    "Comprender a profundidad su necesidad, contexto y emociones, para anticiparse y ofrecer valor.",
+                    "Solo obtener información personal del cliente.",
+                    "Decirle al cliente lo que necesita sin escucharlo.",
+                    "Limitar la interacción a lo estrictamente necesario."
+                ],
+                correctAnswer: "Comprender a profundidad su necesidad, contexto y emociones, para anticiparse y ofrecer valor."
+            },
+            {
+                question: "Verdadero o Falso: La Cultura Mater es el pegamento que une, inspira e impulsa a crecer al Grupo Mater.",
+                type: "true_false",
+                options: ["Verdadero", "Falso"],
+                correctAnswer: "Verdadero"
+            },
+            {
+                question: "¿Qué se logra cuando se comparte el mismo propósito en la Cultura Mater?",
+                type: "multiple_choice",
+                options: [
+                    "Disfrutar verdaderamente lo que se hace y avanzar juntos.",
+                    "Competir individualmente por los mejores resultados.",
+                    "Trabajar de forma aislada sin interacción.",
+                    "Ignorar la importancia del propósito."
+                ],
+                correctAnswer: "Disfrutar verdaderamente lo que se hace y avanzar juntos."
+            },
+            {
+                question: "Verdadero o Falso: La Cultura Mater es una opción, y cada integrante decide si la vive o no.",
+                type: "true_false",
+                options: ["Verdadero", "Falso"],
+                correctAnswer: "Falso"
+            },
+            {
+                question: "¿Cuál es el propósito del Grupo Mater, según se menciona en la práctica 'CONECTAR CON EL PROPÓSITO'?",
+                type: "multiple_choice",
+                options: [
+                    "Fortalecer la conexión con lo que hacemos en el Grupo Mater.",
+                    "Solo generar ganancias económicas.",
+                    "Ser el líder del mercado a toda costa.",
+                    "Evitar cualquier tipo de cambio."
+                ],
+                correctAnswer: "Fortalecer la conexión con lo que hacemos en el Grupo Mater."
+            },
+            {
+                question: "Verdadero o Falso: La práctica 'UTILIZAR LO MEJOR DE NOSOTROS PARA LOGRAR EL OBJETIVO' se enfoca en describir el objetivo del equipo sin considerar los aportes individuales.",
+                type: "true_false",
+                options: ["Verdadero", "Falso"],
+                correctAnswer: "Falso"
+            },
+            {
+                question: "¿Qué se busca al 'Complementar fortalezas' en la sección 'INSPIRAR E INTEGRAR'?",
+                type: "multiple_choice",
+                options: [
+                    "Observar en los otros lo que hacen bien, y cómo eso puede potenciar al equipo.",
+                    "Identificar solo las debilidades de los compañeros.",
+                    "Ignorar las habilidades de los demás.",
+                    "Competir para ver quién tiene más fortalezas."
+                ],
+                correctAnswer: "Observar en los otros lo que hacen bien, y cómo eso puede potenciar al equipo."
+            },
+            {
+                question: "Verdadero o Falso: La práctica 'MODELO DE LAS 4D' está dirigida solo a los integrantes operativos del equipo.",
+                type: "true_false",
+                options: ["Verdadero", "Falso"],
+                correctAnswer: "Falso"
+            },
+            {
+                question: "¿Qué se busca con la 'Gestión del tiempo' como comportamiento clave en el liderazgo Mater?",
+                type: "multiple_choice",
+                options: [
+                    "Priorizar y mantener el foco en lo importante y ayudar al equipo a no dispersarse, evitando distracciones.",
+                    "Realizar múltiples tareas a la vez sin un orden específico.",
+                    "Dejar que el equipo decida sus propios plazos sin supervisión.",
+                    "Evitar las reuniones para ahorrar tiempo."
+                ],
+                correctAnswer: "Priorizar y mantener el foco en lo importante y ayudar al equipo a no dispersarse, evitando distracciones."
+            },
+            {
+                question: "Verdadero o Falso: La 'Resiliencia' en el liderazgo Mater implica adaptarse con agilidad a los cambios, manteniendo la confianza del equipo en momentos de incertidumbre.",
+                type: "true_false",
+                options: ["Verdadero", "Falso"],
+                correctAnswer: "Verdadero"
+            },
+            {
+                question: "¿Qué se busca con la competencia 'Habilidad para cuestionar'?",
+                type: "multiple_choice",
+                options: [
+                    "Elevar la calidad de las soluciones sin conformarse con respuestas superficiales.",
+                    "Cuestionar todas las decisiones sin proponer alternativas.",
+                    "Evitar hacer preguntas para no parecer ignorante.",
+                    "Aceptar todas las respuestas sin análisis crítico."
+                ],
+                correctAnswer: "Elevar la calidad de las soluciones sin conformarse con respuestas superficiales."
+            },
+            {
+                question: "Verdadero o Falso: La 'Gestión del talento y delegación efectiva' se refiere a identificar fortalezas y distribuir el trabajo estratégicamente.",
+                type: "true_false",
+                options: ["Verdadero", "Falso"],
+                correctAnswer: "Verdadero"
+            },
+            {
+                question: "¿Qué implica la 'Capacidad para gestionar la diversidad de opiniones'?",
+                type: "multiple_choice",
+                options: [
+                    "Escuchar diferentes perspectivas y canalizarlas en decisiones efectivas.",
+                    "Ignorar las opiniones que difieren de la propia.",
+                    "Imponer una única perspectiva para evitar el debate.",
+                    "Permitir que las discusiones se prolonguen sin llegar a un acuerdo."
+                ],
+                correctAnswer: "Escuchar diferentes perspectivas y canalizarlas en decisiones efectivas."
+            },
+            {
+                question: "Verdadero o Falso: La 'Proactividad y enfoque en soluciones' implica diagnosticar problemas y movilizar hacia alternativas concretas.",
+                type: "true_false",
+                options: ["Verdadero", "Falso"],
+                correctAnswer: "Verdadero"
+            }
+        ];
+
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let selectedOption = null;
+        let answerChecked = false; // New flag to prevent multiple checks per question
+
+        const questionText = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const feedbackMessage = document.getElementById('feedback-message');
+        const nextButton = document.getElementById('next-button');
+        const quizSection = document.getElementById('quiz-section');
+        const resultsSection = document.getElementById('results-section');
+        const finalScoreSpan = document.getElementById('final-score');
+        const totalQuestionsSpan = document.getElementById('total-questions');
+        const restartButton = document.getElementById('restart-button');
+        const questionCounter = document.getElementById('question-counter'); // Get the new element
+
+        // Function to load a question
+        function loadQuestion() {
+            // Clear previous options and feedback
+            optionsContainer.innerHTML = '';
+            feedbackMessage.textContent = '';
+            nextButton.disabled = true;
+            selectedOption = null;
+            answerChecked = false;
+
+            if (currentQuestionIndex < questions.length) {
+                // Update the question counter
+                questionCounter.textContent = `Pregunta ${currentQuestionIndex + 1} de ${questions.length}`;
+
+                const currentQuestion = questions[currentQuestionIndex];
+                questionText.textContent = currentQuestion.question;
+
+                // Create buttons for each option
+                currentQuestion.options.forEach(option => {
+                    const button = document.createElement('button');
+                    button.textContent = option;
+                    button.classList.add('option-button');
+                    button.addEventListener('click', () => {
+                        if (!answerChecked) {
+                            selectOption(button, option);
+                            checkAnswer();
+                        }
+                    });
+                    optionsContainer.appendChild(button);
+                });
+            } else {
+                // If all questions are answered, show results
+                showResults();
+            }
+        }
+
+        // Function to handle option selection (visual only)
+        function selectOption(button, option) {
+            // Remove 'selected' class from all buttons
+            document.querySelectorAll('.option-button').forEach(btn => {
+                btn.classList.remove('selected');
+            });
+            // Add 'selected' class to the clicked button
+            button.classList.add('selected');
+            selectedOption = option;
+        }
+
+        // Function to check the answer
+        function checkAnswer() {
+            answerChecked = true;
+
+            const currentQuestion = questions[currentQuestionIndex];
+            const optionButtons = document.querySelectorAll('.option-button');
+
+            // Disable all option buttons after submission
+            optionButtons.forEach(btn => btn.disabled = true);
+            nextButton.disabled = false;
+
+            // Check if the selected option is correct
+            if (selectedOption === currentQuestion.correctAnswer) {
+                score++;
+                feedbackMessage.textContent = "¡Correcto!";
+                feedbackMessage.style.color = '#10b981'; // Green color
+                // Highlight the correct answer
+                optionButtons.forEach(btn => {
+                    if (btn.textContent === currentQuestion.correctAnswer) {
+                        btn.classList.add('correct');
+                    }
+                });
+            } else {
+                feedbackMessage.textContent = `Incorrecto. La respuesta correcta es: ${currentQuestion.correctAnswer}`;
+                feedbackMessage.style.color = '#ef4444'; // Red color
+                // Highlight incorrect selected answer and the correct answer
+                optionButtons.forEach(btn => {
+                    if (btn.textContent === selectedOption) {
+                        btn.classList.add('incorrect');
+                    }
+                    if (btn.textContent === currentQuestion.correctAnswer) {
+                        btn.classList.add('correct');
+                    }
+                });
+            }
+        }
+
+        // Function to move to the next question
+        function nextQuestion() {
+            currentQuestionIndex++;
+            loadQuestion();
+        }
+
+        // Function to show final results
+        function showResults() {
+            quizSection.classList.add('hidden');
+            resultsSection.classList.remove('hidden');
+            finalScoreSpan.textContent = score;
+            totalQuestionsSpan.textContent = questions.length;
+        }
+
+        // Function to restart the quiz
+        function restartQuiz() {
+            currentQuestionIndex = 0;
+            score = 0;
+            resultsSection.classList.add('hidden');
+            quizSection.classList.remove('hidden');
+            loadQuestion();
+        }
+
+        // Event Listeners
+        nextButton.addEventListener('click', nextQuestion);
+        restartButton.addEventListener('click', restartQuiz);
+
+        // Initial load of the first question
+        window.onload = loadQuestion;
+    </script>
+</body>
+</html>
