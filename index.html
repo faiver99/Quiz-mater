@@ -16,18 +16,27 @@
             align-items: center;
             min-height: 100vh;
             margin: 0;
+            padding: 1rem; /* Added responsive padding for body */
+            box-sizing: border-box; /* Ensure padding is included in element's total width and height */
         }
         .container {
             background-color: #ffffff;
             border-radius: 1.5rem; /* More rounded corners */
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-            max-width: 75%; /* Adjusted to be smaller */
-            width: 500px; /* Adjusted to be smaller */
-            padding: 2.5rem;
+            width: 100%; /* Take full width on small screens */
+            max-width: 500px; /* Max width for larger screens */
+            padding: 2rem; /* Adjusted padding for better mobile fit */
             text-align: center;
             display: flex;
             flex-direction: column;
             gap: 1.5rem;
+
+            /* Responsive adjustments for larger screens */
+            @media (min-width: 640px) { /* Tailwind's 'sm' breakpoint */
+                padding: 2.5rem;
+                max-width: 75%; /* Keep original max-width for larger screens */
+                width: 500px; /* Keep original fixed width for larger screens */
+            }
         }
         .question-counter {
             font-size: 1rem;
@@ -37,10 +46,14 @@
             text-align: right; /* Align to the right */
         }
         .question-text {
-            font-size: 1.5rem;
+            font-size: 1.25rem; /* Slightly smaller for mobile */
             font-weight: 700;
             color: #1a202c; /* Dark text */
             margin-bottom: 1.5rem;
+
+            @media (min-width: 640px) {
+                font-size: 1.5rem; /* Original size for larger screens */
+            }
         }
         .options-container {
             display: flex;
@@ -51,15 +64,20 @@
         .option-button {
             background-color: #4299e1; /* Blue */
             color: #ffffff;
-            padding: 1rem 1.5rem;
+            padding: 0.8rem 1rem; /* Adjusted padding for mobile */
             border-radius: 0.75rem; /* Rounded */
-            font-size: 1.125rem;
+            font-size: 1rem; /* Adjusted font size for mobile */
             font-weight: 600;
             cursor: pointer;
             transition: background-color 0.3s ease, transform 0.2s ease;
             border: none;
             text-align: left;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+
+            @media (min-width: 640px) {
+                padding: 1rem 1.5rem; /* Original padding for larger screens */
+                font-size: 1.125rem; /* Original font size for larger screens */
+            }
         }
         .option-button:hover {
             background-color: #3182ce; /* Darker blue on hover */
@@ -76,9 +94,13 @@
             background-color: #ef4444; /* Red for incorrect */
         }
         .feedback-message {
-            font-size: 1.25rem;
+            font-size: 1.1rem; /* Adjusted font size for mobile */
             font-weight: 600;
             margin-top: 1rem;
+
+            @media (min-width: 640px) {
+                font-size: 1.25rem; /* Original size for larger screens */
+            }
         }
         .navigation-buttons {
             display: flex;
@@ -106,22 +128,31 @@
             cursor: not-allowed;
         }
         .results-container {
-            font-size: 1.5rem;
+            font-size: 1.25rem; /* Adjusted for mobile */
             font-weight: 700;
             color: #1a202c;
+
+            @media (min-width: 640px) {
+                font-size: 1.5rem; /* Original size for larger screens */
+            }
         }
         .restart-button {
             background-color: #f6ad55; /* Orange */
             color: #ffffff;
-            padding: 1rem 2rem;
+            padding: 0.8rem 1.5rem; /* Adjusted for mobile */
             border-radius: 0.75rem;
-            font-size: 1.25rem;
+            font-size: 1.125rem; /* Adjusted for mobile */
             font-weight: 700;
             cursor: pointer;
             transition: background-color 0.3s ease, transform 0.2s ease;
             border: none;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             margin-top: 1.5rem;
+
+            @media (min-width: 640px) {
+                padding: 1rem 2rem; /* Original padding for larger screens */
+                font-size: 1.25rem; /* Original font size for larger screens */
+            }
         }
         .restart-button:hover {
             background-color: #ed8936; /* Darker orange on hover */
@@ -615,7 +646,7 @@
                     "\"La cultura es opcional, cada uno decide cómo vivirla.\"",
                     "\"No hay camino definido para el crecimiento.\""
                 ],
-                correctAnswer: "\"¡Asegúrate de conectar con nuestra Cultura MATS, porque es el camino que nos permite crecer y construir en equipo!\""
+                correctAnswer: "\"¡Asegúrate de conectar con nuestra Cultura MATER, porque es el camino que nos permite crecer y construir en equipo!\""
             },
             {
                 question: "Verdadero o Falso: La 'Hospitalidad atlética' en el Grupo Mater se refiere a servir con actitud, detalle y pasión, como si se estuviera compitiendo por ofrecer la mejor experiencia.",
@@ -792,7 +823,15 @@
         const finalScoreSpan = document.getElementById('final-score');
         const totalQuestionsSpan = document.getElementById('total-questions');
         const restartButton = document.getElementById('restart-button');
-        const questionCounter = document.getElementById('question-counter'); // Get the new element
+        const questionCounter = document.getElementById('question-counter');
+
+        // Function to shuffle an array (Fisher-Yates algorithm)
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]]; // Swap elements
+            }
+        }
 
         // Function to load a question
         function loadQuestion() {
@@ -810,8 +849,12 @@
                 const currentQuestion = questions[currentQuestionIndex];
                 questionText.textContent = currentQuestion.question;
 
-                // Create buttons for each option
-                currentQuestion.options.forEach(option => {
+                // Create a shuffled copy of the options for display
+                const shuffledOptions = [...currentQuestion.options]; // Create a copy to avoid modifying original
+                shuffleArray(shuffledOptions); // Shuffle the copy
+
+                // Create buttons for each shuffled option
+                shuffledOptions.forEach(option => {
                     const button = document.createElement('button');
                     button.textContent = option;
                     button.classList.add('option-button');
